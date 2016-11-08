@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+	<Properties>
+		<Property name="LOG_DIR">logs</Property>
+		<Property name="ARCHIVE">archive</Property>
+		<Property name="PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+	</Properties>
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="${PATTERN}" />
+		</Console>
+		<RollingFile name="infoFileWriter"
+                     fileName="${LOG_DIR}/info.log"
+                     filePattern="${ARCHIVE}/info.log.%d{yyyy-MM-dd-hh-mm}.gz">
+            <PatternLayout pattern="${PATTERN}"/>
+            <TimeBasedTriggeringPolicy/>
+        </RollingFile>
+        <RollingFile name="errorFileWriter"
+                     fileName="${LOG_DIR}/error.log"
+                     filePattern="${ARCHIVE}/error.log.%d{yyyy-MM-dd-hh-mm}.gz">
+            <PatternLayout pattern="${PATTERN}"/>
+            <TimeBasedTriggeringPolicy/>
+        </RollingFile>
+	</Appenders>
+	<Loggers>
+		<Root level="ERROR">
+            <AppenderRef ref="infoFileWriter"/>
+            <AppenderRef ref="Console"/>
+        </Root>
+        <Logger name="grokking.data.kafka.collector.CollectorServlet" level="ERROR" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="errorFileWriter"/>
+        </Logger>
+        <Logger name="grokking.data.worker.LogCollector" level="ERROR" additivity="false">
+        	<AppenderRef ref="Console"/>
+        	<AppenderRef ref="errorFileWriter"/>
+        </Logger>
+	</Loggers>
+</Configuration>

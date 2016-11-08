@@ -1,0 +1,95 @@
+<project name="grokking-data-collector" basedir="." default="jar">
+	<property name="src.dir" value="src" />
+	<property name="lib.dir" value="lib" />
+	<property name="build.dir" value="build" />
+	<property name="run.dir" value="${build.dir}/sbin" />
+	<property name="tmp.dir" value="${build.dir}/tmp" />
+	<property name="run.conf.dir" value="${build.dir}/conf" />
+	<property name="run.lib.dir" value="${build.dir}/${lib.dir}" />
+	<property name="run.log.dir" value="${build.dir}/log" />
+	<property name="service-sh" value="${build.dir}/service.sh" />
+	<property name="src.conf" value="conf" />
+	<property name="src.script" value="script" />
+	<property name="classes.dir" value="${run.dir}/classes" />
+	<property name="main-class" value="grokking.data.server.EmbeddedJettyServer" />
+	
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar" />
+	</path>
+	
+	<target name="clean">
+		<delete dir="${classes.dir}" failonerror="false" />
+		<delete dir="${run.lib.dir}" failonerror="false" />
+		<delete dir="${run.conf.dir}" failonerror="false" />
+		<mkdir dir="${build.dir}" />
+	</target>
+	
+	<target name="cleanall">
+		<delete dir="${build.dir}" failonerror="false" />
+		<mkdir dir="${build.dir}" />
+	</target>
+	
+	<target name="compile" depends="clean">
+		<mkdir dir="${run.dir}" />
+		<mkdir dir="${run.conf.dir}" />
+		<mkdir dir="${classes.dir}" />
+		<mkdir dir="${tmp.dir}" />
+		<mkdir dir="${run.lib.dir}" />
+		<mkdir dir="${run.log.dir}" />
+		<copy todir="${run.lib.dir}">
+			<fileset dir="${lib.dir}" includes="**/*" />
+		</copy>
+		<copy todir="${run.conf.dir}" overwrite="true">
+			<fileset dir="${src.conf}" includes="**/*.ini" />
+		</copy>
+		<copy todir="${build.dir}" overwrite="true">
+			<fileset dir="${basedir}" includes="*.sh" />
+		</copy>
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" />
+	</target>
+	
+	<path id="build-classpath">
+		<fileset dir="${run.lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<target name="jar" depends="compile">
+		<delete file="${run.dir}/${main-class}.jar" failonerror="false" />
+		<manifestclasspath property="jar.classpath" jarfile="${run.dir}/${main-class}.jar">
+			<classpath refid="build-classpath" />
+		</manifestclasspath>
+
+		<jar destfile="${run.dir}/${main-class}.jar" basedir="${classes.dir}">
+			<!--<zipgroupfileset dir="lib" includes="*.jar"/>-->
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}" />
+				<attribute name="Class-Path" value="${jar.classpath}" />
+			</manifest>
+		</jar>
+	</target>
+	
+	<target name="s1deploy" depends="jar">
+		<property name="scpserver" value="stackops@61.28.227.192:/home/stackops/vinhdp/kafka-collector">
+		</property>
+		<scp verbose="yes" port="234" trust="true" file="${run.dir}/${main-class}.jar" todir="${scpserver}/sbin" keyfile="${user.home}/.ssh/id_rsa" passphrase="${pass}" />
+		<scp verbose="yes" port="234" trust="true" todir="${scpserver}/conf" keyfile="${user.home}/.ssh/id_rsa" passphrase="${pass}">
+			<fileset dir="${src.conf}/">
+				<include name="**/*.ini" />
+				<include name="**/*.xml" />
+			</fileset>
+		</scp>
+	</target>
+	
+	<target name="s2deploy" depends="jar">
+			<property name="scpserver" value="stackops@61.28.227.198:/home/stackops/vinhdp/kafka-collector">
+			</property>
+			<scp verbose="yes" port="234" trust="true" file="${run.dir}/${main-class}.jar" todir="${scpserver}/sbin" keyfile="${user.home}/.ssh/id_rsa" passphrase="${pass}" />
+			<scp verbose="yes" port="234" trust="true" todir="${scpserver}/conf" keyfile="${user.home}/.ssh/id_rsa" passphrase="${pass}">
+				<fileset dir="${src.conf}/">
+					<include name="**/*.ini" />
+					<include name="**/*.xml" />
+				</fileset>
+			</scp>
+		</target>
+</project>
