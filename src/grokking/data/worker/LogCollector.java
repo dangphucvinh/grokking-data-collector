@@ -48,7 +48,14 @@ public class LogCollector implements Runnable {
 	        props.put("value.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
 	        props.put("request.required.acks", "1");
 	
-	        String kafkaQueue = event.get("metric")[0];
+	        String kafkaQueue = "grokking";
+	        try{
+	        	
+	        	kafkaQueue = event.get("metric")[0];
+	        } catch (NullPointerException ex){
+	        	
+	        	logger.error("Unknow events, push to default topic", ex);
+	        }
 	        
 	        Map<String, Object> mpInfo = new HashMap<String, Object>();
 	        Set<Entry<String, String[]>> entries = event.entrySet();
